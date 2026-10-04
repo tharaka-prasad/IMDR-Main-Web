@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Instrument Sans', 'Noto Sans Sinhala', system-ui, sans-serif; }
+    h1, h2, h3, h4 { font-family: 'Archivo', 'Noto Sans Sinhala', system-ui, sans-serif; letter-spacing: -0.01em; }
+    :focus-visible { outline: 2px solid #0075C9; outline-offset: 2px; }
+    ::selection { background: #F5A623; color: #0A1931; }
+}
+
+@layer components {
+    /* The wide, heavy letterforms echo the IMDR wordmark. */
+    .display-wide { font-family: 'Archivo', sans-serif; font-stretch: 120%; font-weight: 800; letter-spacing: -0.015em; line-height: 1.02; }
+    .input { @apply w-full rounded-lg border border-navy-200 bg-white px-3 py-2 text-sm text-navy placeholder:text-navy-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25 disabled:bg-navy-50; }
+    .th { @apply whitespace-nowrap px-3 py-2.5 text-left text-xs font-semibold text-navy-500; }
+    .td { @apply px-3 py-3 align-top text-sm; }
+}
+
+/* Camera viewfinder corners used on the home page. */
+.vf-corner { position: absolute; width: 28px; height: 28px; border-color: #0075C9; border-style: solid; }
+.vf-tl { top: 0; left: 0; border-width: 3px 0 0 3px; }
+.vf-tr { top: 0; right: 0; border-width: 3px 3px 0 0; }
+.vf-bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; }
+.vf-br { bottom: 0; right: 0; border-width: 0 3px 3px 0; }
+
+/* One deliberate moment of motion: the recording dot. */
+@keyframes rec-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
+.rec-dot { animation: rec-pulse 1.8s ease-in-out infinite; }
+
+.ruler { background-image: repeating-linear-gradient(90deg, #97A9C7 0 1px, transparent 1px 12px); }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+@media print {
+    .no-print { display: none !important; }
+    body { background: #fff !important; }
+}
