@@ -29,7 +29,6 @@ const leaders = [
     { slug: 'nilusha-hapuarachchi', name: 'Mr. Nilusha Hapuarachchi', role: 'Chairman', qual: 'Diploma in Wildlife (Wildlife Trust) & Diploma in Film Direction' },
     { slug: 'gayani-kaushaliya', name: 'Mrs. Gayani Kaushaliya', role: 'Vice Chairman', qual: 'Diploma in Writing and Communication (University of Sri Jayewardenepura)' },
     { slug: 'pvwp-wijesinha', name: 'Mr. P. V. W. P. Wijesinha', role: 'Executive Director (Admin)', qual: 'Master in Media Research (University of Colombo)' },
-    { slug: 'prasanna-kumara', name: 'Mr. Prasanna S Kumara', role: 'Executive Director of Academics', qual: 'Master in Media Research (University of Colombo)' },
     { slug: 'nalin-jayaneththi', name: 'Mr. Nalin Jayaneththi', role: 'Chief Financial Director', qual: 'Higher Diploma in Business Management' },
     { slug: 'tharaka-prasad', name: 'Mr. Tharaka Prasad', role: 'IT Executive Officer', qual: 'Bachelor of Information Technology (Hons) in Networking and Mobile Computing (Horizon Campus)' },
 ];
