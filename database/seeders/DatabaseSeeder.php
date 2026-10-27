@@ -2,26 +2,19 @@
 
 namespace Database\Seeders;
 
-use App\Models\Batch;
 use App\Models\Classroom;
-use App\Models\Course;
 use App\Models\ExpenseCategory;
-use App\Models\Invoice;
 use App\Models\Lecturer;
+use App\Models\Post;
 use App\Models\SalaryRule;
-use App\Models\Subject;
-use App\Models\TeachingAssignment;
-use App\Models\TimetableEntry;
 use App\Models\User;
-use App\Services\EnrollmentService;
-use App\Services\StudentService;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * Real institute content (expense categories, website posts) comes from the IMDR business plan.
- * All courses (18 specialised + 2 A/L) live in SpecialisedCoursesSeeder.
- * Demo people and demo classes are only created when the app is NOT in production.
+ * All courses live in SpecialisedCoursesSeeder.
+ * Demo staff and classrooms are only created when the app is NOT in production.
  */
 class DatabaseSeeder extends Seeder
 {
@@ -34,6 +27,8 @@ class DatabaseSeeder extends Seeder
 
         $this->expenseCategories();
         $this->call(SpecialisedCoursesSeeder::class);
+        $this->call(DepartmentSeeder::class);
+        $this->posts();
 
         if (! app()->isProduction()) {
             $this->demo();
@@ -47,7 +42,28 @@ class DatabaseSeeder extends Seeder
         }
     }
 
-    
+    private function posts(): void
+    {
+        $items = [
+            ['news', 'IMDR opens registration for the first intake', 'Applications are now open for IMDR\'s 18 specialised courses in media, cinema, technology and digital business.', 'IMDR is opening its doors with a focus on media literacy, digital skills and research. Programmes start next month. Submit the online Application Form or visit the institute to apply.'],
+            ['news', 'Think Before You Share: free media literacy series', 'A free short-video series on spotting misleading content.', 'Free educational content is how IMDR builds trust before you enrol. Follow the series on Facebook and YouTube.'],
+            ['news', 'Academic Advisory Board being formed', 'University academics, media specialists, ICT professionals and experienced teachers will guide the programmes.', 'The board will advise on curriculum, research, quality assurance, industry relevance and international collaboration.'],
+            ['event', 'Open day and free workshop: Digital skills for everyone', 'Meet the lecturers, see the classrooms and join a free hands-on workshop.', 'A relaxed morning for students, parents and teachers. Bring your questions about our 18 specialised courses.'],
+            ['event', 'Photography and smartphone video basics (free workshop)', 'Learn framing, light and sound with the phone in your pocket.', 'Hands-on session led by IMDR media production staff.'],
+            ['research', 'Youth and digital media: how young people verify what they see', 'IMDR Research Centre study plan on misinformation and online behaviour.', 'Research areas include media consumption, social media behaviour, digital literacy, misinformation and disinformation, AI and media, and online safety. Outputs will include research reports, policy briefs and public awareness material.'],
+            ['research', 'Media literacy in Sri Lankan schools: teacher survey', 'A planned survey to guide teacher development programmes.', 'Findings will feed the Community Development Division school programmes.'],
+            ['media', 'IMDR Student Corner', 'Student-made photo stories, short videos and podcasts.', 'The Media Production Unit turns coursework into real projects: learn, practise, create, earn.'],
+            ['media', 'Media Explained', 'Short explainers on how newsrooms, social platforms and algorithms work.', 'A regular series produced with IMDR lecturers and students.'],
+        ];
+
+        foreach ($items as $i => [$type, $title, $excerpt, $body]) {
+            Post::firstOrCreate(['slug' => Str::slug($title)], [
+                'type' => $type, 'title' => $title, 'excerpt' => $excerpt, 'body' => $body, 'is_published' => true,
+                'published_at' => now()->subDays($i), 'event_date' => $type === 'event' ? now()->addDays(10 + $i * 4) : null,
+                'location' => $type === 'event' ? 'IMDR learning centre' : null,
+            ]);
+        }
+    }
 
     private function demo(): void
     {
@@ -63,60 +79,5 @@ class DatabaseSeeder extends Seeder
 
         Classroom::firstOrCreate(['name' => 'Classroom 1'], ['capacity' => 40, 'location' => 'Ground floor']);
         Classroom::firstOrCreate(['name' => 'Computer lab'], ['capacity' => 30, 'location' => 'First floor']);
-
-        // Demo data uses the A/L Media programme (it has fees, subjects and an open batch).
-        $course = Course::where('code', 'ALM')->firstOrFail();
-        $batch = Batch::where('course_id', $course->id)->first();
-        $subjects = Subject::where('course_id', $course->id)->get();
-
-        foreach ($subjects->take(3) as $subject) {
-            TeachingAssignment::firstOrCreate(['batch_id' => $batch->id, 'subject_id' => $subject->id, 'lecturer_id' => $lecturer->id]);
-        }
-
-        $room = Classroom::first();
-        foreach ([0, 7, 14] as $offset) {
-            $date = Carbon::parse($batch->start_date)->addDays($offset);
-            TimetableEntry::firstOrCreate(['batch_id' => $batch->id, 'subject_id' => $subjects[0]->id, 'date' => $date->toDateString(), 'start_time' => '09:00'], [
-                'lecturer_id' => $lecturer->id, 'classroom_id' => $room->id, 'end_time' => '12:00', 'topic' => 'Introduction session', 'status' => 'scheduled', 'hours' => 3,
-            ]);
-        }
-
-        $students = app(StudentService::class);
-        $enroll = app(EnrollmentService::class);
-
-        // Student 1: approved, everything paid up to date -> LMS open.
-        if (! User::where('username', 'student1')->exists()) {
-            [$s1] = $students->create(
-                ['name' => 'Kasun Fernando', 'username' => 'student1', 'phone' => '0771234567', 'password' => $password],
-                ['nic' => '200512345678', 'date_of_birth' => '2005-04-12', 'gender' => 'male', 'address' => 'Colombo 07', 'school' => 'Royal College', 'guardian_name' => 'Ruwan Fernando', 'guardian_phone' => '0712223334', 'whatsapp_number' => '0771234567'],
-                'active'
-            );
-            $e1 = $enroll->enroll($s1, $batch);
-            $e1->update(['status' => 'approved', 'approved_at' => now()]);
-            Invoice::where('enrollment_id', $e1->id)->where('type', 'registration')->get()->each(fn ($i) => $i->update(['paid_amount' => $i->total, 'status' => 'paid']));
-        }
-
-        // Student 2: approved but a payment is overdue -> LMS shows "payment delayed".
-        if (! User::where('username', 'student2')->exists()) {
-            [$s2] = $students->create(
-                ['name' => 'Dilani Silva', 'username' => 'student2', 'phone' => '0759876543', 'password' => $password],
-                ['nic' => '200623456789', 'date_of_birth' => '2006-09-30', 'gender' => 'female', 'address' => 'Nugegoda', 'school' => 'Visakha Vidyalaya', 'whatsapp_number' => '0759876543'],
-                'active'
-            );
-            $e2 = $enroll->enroll($s2, $batch);
-            $e2->update(['status' => 'approved', 'approved_at' => now()]);
-            Invoice::where('enrollment_id', $e2->id)->where('type', 'registration')->get()->each(fn ($i) => $i->update(['paid_amount' => $i->total, 'status' => 'paid']));
-            Invoice::where('enrollment_id', $e2->id)->where('type', 'installment')->orderBy('id')->first()?->update(['due_date' => now()->subDays(5)->toDateString()]);
-        }
-
-        // Student 3: applied online, waiting for approval.
-        if (! User::where('username', 'student3')->exists()) {
-            [$s3] = $students->create(
-                ['name' => 'Tharindu Jayasinghe', 'username' => 'student3', 'phone' => '0701112223', 'password' => $password],
-                ['address' => 'Kandy'],
-                'pending'
-            );
-            $enroll->enroll($s3, $batch);
-        }
     }
 }

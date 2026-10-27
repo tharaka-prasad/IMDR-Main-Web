@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { UserPlus } from 'lucide-react';
+import { Send, UserPlus } from 'lucide-react';
 import { Badge, Button, Empty, PageHeader, Pagination, SearchBox, SelectInput, Status, TableWrap, Thead } from '../../Components/ui';
 import { money, useFilters } from '../../lib';
 
@@ -42,7 +42,12 @@ export default function Index({ students, filters, batches }) {
                                 <td className="td">{s.enrollments.length ? s.enrollments.map((e, i) => <p key={i} className="text-sm">{e.course}<span className="text-xs text-navy-400"> ({e.batch}, {e.status})</span></p>) : <span className="text-navy-400">None</span>}</td>
                                 <td className="td"><Status value={s.user_status} /></td>
                                 <td className="td">{lmsBadge(s)}{s.overdue_total > 0 && <p className="mt-1 text-xs text-red-700">{money(s.overdue_total)} overdue</p>}</td>
-                                <td className="td text-right"><Button href={`/portal/students/${s.id}`} variant="subtle" size="sm">Open</Button></td>
+                                <td className="td">
+                                    <div className="flex justify-end gap-2">
+                                        <Button href={`/portal/messages?student=${s.id}`} variant="outline" size="sm" title={`Send a message to ${s.name}`}><Send size={13} /> Message</Button>
+                                        <Button href={`/portal/students/${s.id}`} variant="subtle" size="sm">Open</Button>
+                                    </div>
+                                </td>
                             </tr>
                         ))}
                     </tbody>

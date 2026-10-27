@@ -11,8 +11,10 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LmsContentController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnlinePaymentController;
+use App\Http\Controllers\PanelController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\ProfileController;
@@ -95,7 +97,7 @@ Route::middleware(['auth', 'active'])->prefix('portal')->group(function () {
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/password', [ProfileController::class, 'password']);
     Route::get('/announcements', [StudentPortalController::class, 'announcements']);
-    Route::get('/timetable', [TimetableController::class, 'index']);
+    Route::get('/timetable', [TimetableController::class, 'index'])->middleware('role:super_admin,admin,lecturer,student');
     Route::get('/receipts/{payment}', [ReceiptController::class, 'show']);
     Route::get('/payment/return', [OnlinePaymentController::class, 'return']);
     Route::get('/certificates/{certificate}', [CertificateController::class, 'show'])->whereNumber('certificate');
@@ -111,8 +113,9 @@ Route::middleware(['auth', 'active'])->prefix('portal')->group(function () {
         Route::get('/my/certificates', [CertificateController::class, 'mine']);
     });
 
-    // Learning: students with a delayed payment (or without an approved registration) see the "payment delayed" page instead.
-    Route::middleware('lms')->group(function () {
+    // Learning (admin, lecturer, student panels only - never the accountant panel).
+    // Students with a delayed payment (or without an approved registration) see the "payment delayed" page instead.
+    Route::middleware(['role:super_admin,admin,lecturer,student', 'lms'])->group(function () {
         Route::get('/lms', [LmsContentController::class, 'index']);
         Route::get('/lms/{id}/download', [LmsContentController::class, 'download'])->whereNumber('id');
         Route::get('/assignments', [AssignmentController::class, 'index']);
@@ -173,6 +176,11 @@ Route::middleware(['auth', 'active'])->prefix('portal')->group(function () {
         Route::post('/students/{student}/documents', [StudentDocumentController::class, 'store']);
         Route::delete('/documents/{document}', [StudentDocumentController::class, 'destroy']);
 
+        // Messages to students (in the portal and/or on WhatsApp)
+        Route::get('/messages', [MessageController::class, 'index']);
+        Route::get('/messages/students', [MessageController::class, 'search']);
+        Route::post('/messages', [MessageController::class, 'store']);
+
         Route::get('/registrations', [EnrollmentController::class, 'index']);
         Route::post('/registrations/{enrollment}/approve', [EnrollmentController::class, 'approve']);
         Route::post('/registrations/{enrollment}/reject', [EnrollmentController::class, 'reject']);
@@ -224,3 +232,13 @@ Route::middleware(['auth', 'active'])->prefix('portal')->group(function () {
         Route::put('/settings', [SettingController::class, 'update']);
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Panel entrances: /admin, /accountant, /lecturer, /student
+|--------------------------------------------------------------------------
+| Each user may only enter the panel of their own role (anyone else gets "no access").
+*/
+Route::middleware(['auth', 'active'])
+    ->get('/{panel}', PanelController::class)
+    ->whereIn('panel', ['admin', 'accountant', 'lecturer', 'student']);
