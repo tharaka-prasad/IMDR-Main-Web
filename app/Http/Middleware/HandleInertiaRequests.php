@@ -22,6 +22,7 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
+            'seo' => \Inertia\Inertia::always(fn () => \App\Support\SeoMetadata::forRequest($request)),
             'app' => [
                 'name' => config('imdr.short_name'),
                 'currency' => config('imdr.currency'),

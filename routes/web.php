@@ -38,6 +38,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::get('/', [PublicController::class, 'home'])->name('home');
+Route::get('/sitemap.xml', fn (\App\Support\Sitemap $sitemap) => response($sitemap->xml(), 200)
+    ->header('Content-Type', 'application/xml; charset=UTF-8'));
 Route::get('/about', [PublicController::class, 'about']);
 Route::get('/courses', [PublicController::class, 'courses']);
 Route::get('/courses/{slug}', [PublicController::class, 'course']);
