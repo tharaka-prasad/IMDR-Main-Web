@@ -36,7 +36,7 @@ const base = [
         heading: 'Academic',
         items: [
             { href: '/portal/courses', label: 'Courses', icon: BookOpen },
-            { href: '/portal/manage/course-types', label: 'Course types', icon: Layers },
+            { href: '/portal/manage/course-types', label: 'Course categories', icon: Layers },
             { href: '/portal/manage/subjects', label: 'Subjects', icon: Library },
             { href: '/portal/manage/batches', label: 'Batches', icon: CalendarRange },
             { href: '/portal/manage/classrooms', label: 'Classrooms', icon: DoorOpen },

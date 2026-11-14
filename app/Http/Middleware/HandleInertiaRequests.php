@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use App\Models\AppNotification;
 use App\Models\ContactMessage;
+use App\Models\CourseType;
+use App\Models\Department;
 use App\Models\Enrollment;
 use App\Models\PaymentTransaction;
 use App\Services\AccessService;
@@ -22,7 +24,6 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
-            'seo' => \Inertia\Inertia::always(fn () => \App\Support\SeoMetadata::forRequest($request)),
             'app' => [
                 'name' => config('imdr.short_name'),
                 'currency' => config('imdr.currency'),
@@ -45,6 +46,14 @@ class HandleInertiaRequests extends Middleware
                 'credentials' => fn () => $request->session()->get('credentials'),
             ],
             'unread' => fn () => $user ? AppNotification::where('user_id', $user->id)->whereNull('read_at')->count() : 0,
+            // The "Courses" drop-down in the website header: departments and categories that have published courses.
+            'courseMenu' => fn () => $request->is('portal*', 'login') ? null : [
+                'departments' => Department::where('is_active', true)
+                    ->whereHas('courses', fn ($c) => $c->where('is_published', true))
+                    ->orderBy('name')->get(['id', 'name']),
+                'categories' => CourseType::whereHas('courses', fn ($c) => $c->where('is_published', true))
+                    ->orderBy('level')->get(['id', 'name']),
+            ],
             // Small red numbers on menu items (only the counts each panel needs).
             'badges' => fn () => match (true) {
                 $user && in_array($user->role, ['super_admin', 'admin'], true) => [

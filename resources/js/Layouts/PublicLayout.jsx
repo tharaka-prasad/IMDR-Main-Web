@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Clock, Lock, Mail, MapPin, Menu, Phone, X } from 'lucide-react';
+import { ChevronDown, Clock, Lock, Mail, MapPin, Menu, Phone, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button, FlashMessages } from '../Components/ui';
 import { cx } from '../lib';
@@ -10,7 +10,7 @@ const links = [
     ['/news', 'News'],
     ['/events', 'Events'],
     ['/research', 'Research'],
-    ['/media', 'Media'],
+    // ['/media', 'Media'],
     ['/contact', 'Contact'],
 ];
 
@@ -24,9 +24,52 @@ function WhatsAppIcon({ size = 18 }) {
     );
 }
 
+/** "Courses" tab with a drop-down: pick a department or a category (Certificate, Diploma ...) and land on the filtered Courses page. */
+function CoursesMenu({ href, text, isActive, menu }) {
+    const column = (title, list, param) => (
+        <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-navy-400">{title}</p>
+            <ul className="space-y-0.5">
+                {list.map((item) => (
+                    <li key={item.id}>
+                        <Link href={`/courses?${param}=${item.id}`} className="block rounded-md px-2 py-1.5 text-sm text-navy-700 transition-colors hover:bg-navy-50 hover:text-brand">
+                            {item.name}
+                        </Link>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+
+    return (
+        <div className="group relative">
+            <Link
+                href={href}
+                aria-haspopup="true"
+                aria-current={isActive ? 'page' : undefined}
+                className={cx('relative inline-flex items-center gap-1 px-3.5 py-2 text-sm font-medium transition-colors duration-200', isActive ? 'text-brand' : 'text-navy-700 hover:text-navy')}
+            >
+                {text}
+                <ChevronDown size={14} aria-hidden="true" className="transition-transform duration-200 group-focus-within:rotate-180 group-hover:rotate-180 motion-reduce:transition-none" />
+                <span className={cx('absolute inset-x-3.5 bottom-0.5 h-0.5 origin-left rounded-full bg-gold transition-transform duration-300 ease-out motion-reduce:transition-none', isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100')} />
+            </Link>
+
+            <div className="invisible absolute left-0 top-full z-50 w-[30rem] translate-y-1 opacity-0 transition duration-200 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 motion-reduce:transition-none">
+                <div className="grid grid-cols-2 gap-6 rounded-xl border border-navy-100 bg-white p-5 shadow-xl">
+                    {column('By department', menu.departments, 'department')}
+                    {column('By category', menu.categories, 'type')}
+                    <Link href={href} className="col-span-2 border-t border-navy-100 pt-3 text-sm font-semibold text-brand hover:underline">
+                        View all courses
+                    </Link>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function PublicLayout({ children }) {
     const page = usePage();
-    const { auth } = page.props;
+    const { auth, courseMenu } = page.props;
     const url = page.url;
     const [open, setOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
@@ -89,7 +132,9 @@ export default function PublicLayout({ children }) {
                     </Link>
 
                     <nav className="hidden items-center lg:flex" aria-label="Main">
-                        {links.map(([href, text]) => (
+                                                {links.map(([href, text]) => href === '/courses' && courseMenu && (courseMenu.departments.length > 0 || courseMenu.categories.length > 0) ? (
+                            <CoursesMenu key={href} href={href} text={text} isActive={active(href)} menu={courseMenu} />
+                        ) : (
                             <Link
                                 key={href}
                                 href={href}

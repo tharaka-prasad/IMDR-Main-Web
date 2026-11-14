@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Course;
 use App\Models\CourseType;
+use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -14,28 +15,52 @@ use Inertia\Inertia;
 
 class CourseController extends Controller
 {
+    private function departments()
+    {
+        return Department::orderBy('name')->get(['id', 'name', 'code', 'is_active']);
+    }
+
     public function index(Request $request)
     {
-        $q = Course::with(['courseType:id,name', 'feeStructure'])->withCount('batches');
+        $q = Course::with(['courseType:id,name', 'feeStructure', 'department:id,name,code'])->withCount('batches');
 
         if ($request->filled('type')) {
             $q->where('course_type_id', $request->query('type'));
+        }
+
+        if ($request->filled('department')) {
+            $request->query('department') === 'none'
+                ? $q->whereNull('department_id')
+                : $q->where('department_id', $request->query('department'));
         }
 
         if ($s = trim((string) $request->query('search', ''))) {
             $q->where(fn ($w) => $w->where('name', 'like', "%{$s}%")->orWhere('code', 'like', "%{$s}%"));
         }
 
+        // Courses are listed department by department (courses without a department come first).
+        $q->orderBy(Department::select('name')->whereColumn('departments.id', 'courses.department_id'))->orderBy('name');
+
         return Inertia::render('Courses/Manage', [
-            'courses' => $q->orderBy('name')->paginate(15)->withQueryString(),
+            'courses' => $q->paginate(15)->withQueryString(),
             'types' => CourseType::orderBy('level')->get(['id', 'name']),
-            'filters' => ['search' => $request->query('search', ''), 'type' => $request->query('type', '')],
+            'departments' => $this->departments(),
+            'filters' => [
+                'search' => $request->query('search', ''),
+                'type' => $request->query('type', ''),
+                'department' => $request->query('department', ''),
+            ],
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        return Inertia::render('Courses/Form', ['course' => null, 'types' => CourseType::orderBy('level')->get(['id', 'name'])]);
+        return Inertia::render('Courses/Form', [
+            'course' => null,
+            'types' => CourseType::orderBy('level')->get(['id', 'name']),
+            'departments' => $this->departments(),
+            'defaultDepartment' => $request->query('department'),
+        ]);
     }
 
     public function edit(Course $course)
@@ -43,6 +68,8 @@ class CourseController extends Controller
         return Inertia::render('Courses/Form', [
             'course' => $course->load('feeStructure'),
             'types' => CourseType::orderBy('level')->get(['id', 'name']),
+            'departments' => $this->departments(),
+            'defaultDepartment' => null,
         ]);
     }
 
@@ -51,7 +78,7 @@ class CourseController extends Controller
         $data = $this->validated($request, null);
 
         $course = DB::transaction(function () use ($data) {
-            $course = Course::create($data['course'] + ['slug' => Str::slug($data['course']['name']).'-'.Str::lower(Str::random(4))]);
+            $course = Course::create($data['course'] + ['slug' => Str::slug($data['course']['name']) . '-' . Str::lower(Str::random(4))]);
             $course->feeStructure()->create($data['fee']);
 
             return $course;
@@ -91,39 +118,40 @@ class CourseController extends Controller
     private function validated(Request $request, ?int $id): array
     {
         $v = $request->validate([
-            'course_type_id' => 'required|exists:course_types,id',
-            'code' => ['required', 'string', 'max:30', Rule::unique('courses', 'code')->ignore($id)],
-            'name' => 'required|string|max:200',
-            'duration' => 'nullable|string|max:80',
-            'summary' => 'nullable|string|max:600',
-            'description' => 'nullable|string',
-            'entry_requirements' => 'nullable|string',
-            'learning_outcomes' => 'nullable|string',
-            'is_published' => 'boolean',
-            'registration_fee' => 'required|numeric|min:0',
-            'course_fee' => 'required|numeric|min:0',
-            'installments' => 'nullable|array|max:12',
-            'installments.*.label' => 'required|string|max:80',
-            'installments.*.amount' => 'required|numeric|min:1',
+            'course_type_id'                => 'required|exists:course_types,id',
+            'department_id'                 => 'required|exists:departments,id',
+            'code'                          => ['required', 'string', 'max:30', Rule::unique('courses', 'code')->ignore($id)],
+            'name'                          => 'required|string|max:200',
+            'duration'                      => 'nullable|string|max:80',
+            'summary'                       => 'nullable|string|max:600',
+            'description'                   => 'nullable|string',
+            'entry_requirements'            => 'nullable|string',
+            'learning_outcomes'             => 'nullable|string',
+            'is_published'                  => 'boolean',
+            'registration_fee'              => 'required|numeric|min:0',
+            'course_fee'                    => 'required|numeric|min:0',
+            'installments'                  => 'nullable|array|max:12',
+            'installments.*.label'          => 'required|string|max:80',
+            'installments.*.amount'         => 'required|numeric|min:1',
             'installments.*.due_after_days' => 'required|integer|min:0|max:730',
         ]);
 
         $installments = array_values($v['installments'] ?? []);
-        $sum = round((float) collect($installments)->sum('amount'), 2);
+        $sum          = round((float) collect($installments)->sum('amount'), 2);
 
         // The system works out the balance for the student, so the plan must add up exactly.
         if (count($installments) && abs($sum - round((float) $v['course_fee'], 2)) > 0.009) {
             throw ValidationException::withMessages([
-                'installments' => 'The installments add up to Rs. '.number_format($sum, 2).' but the course fee is Rs. '.number_format((float) $v['course_fee'], 2).'.',
+                'installments' => 'The installments add up to Rs. ' . number_format($sum, 2) . ' but the course fee is Rs. ' . number_format((float) $v['course_fee'], 2) . '.',
             ]);
         }
 
         return [
-            'course' => collect($v)->only(['course_type_id', 'code', 'name', 'duration', 'summary', 'description', 'entry_requirements', 'learning_outcomes', 'is_published'])->all(),
-            'fee' => [
+            'course' => collect($v)->only(['course_type_id', 'department_id', 'code', 'name', 'duration', 'summary', 'description', 'entry_requirements', 'learning_outcomes', 'is_published'])->all(),
+            'fee'    => [
                 'registration_fee' => $v['registration_fee'],
-                'course_fee' => $v['course_fee'],
-                'installments' => $installments ?: null,
+                'course_fee'       => $v['course_fee'],
+                'installments'     => $installments ?: null,
             ],
         ];
     }

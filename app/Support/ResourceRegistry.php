@@ -73,7 +73,7 @@ class ResourceRegistry
 
         return [
             'course-types' => [
-                'title' => 'Course types', 'singular' => 'Course type',
+                'title' => 'Course categories', 'singular' => 'Course category',
                 'model' => CourseType::class,
                 'read' => $staff, 'write' => $acad,
                 'search' => ['name'],

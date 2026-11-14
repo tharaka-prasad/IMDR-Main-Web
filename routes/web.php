@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\ApplyController;
 use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\AttendanceController;
@@ -197,6 +198,12 @@ Route::middleware(['auth', 'active'])->prefix('portal')->group(function () {
         Route::get('/certificates', [CertificateController::class, 'index']);
         Route::post('/certificates', [CertificateController::class, 'store']);
         Route::post('/certificates/{certificate}/revoke', [CertificateController::class, 'revoke']);
+
+        Route::get('/departments', [DepartmentController::class, 'index']);
+        Route::post('/departments', [DepartmentController::class, 'store']);
+        Route::get('/departments/{department}', [DepartmentController::class, 'show']);
+        Route::put('/departments/{department}', [DepartmentController::class, 'update']);
+        Route::delete('/departments/{department}', [DepartmentController::class, 'destroy']);
     });
 
     // Accountant and super admin: money
