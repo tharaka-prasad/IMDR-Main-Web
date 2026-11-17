@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Utility and private responses use noindex headers/meta tags.
+# Keep them crawlable so search engines can read those directives.
+# Authentication remains responsible for protecting private content.
+Sitemap: https://imdr.lk/sitemap.xml

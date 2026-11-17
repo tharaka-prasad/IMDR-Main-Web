@@ -252,7 +252,7 @@ export default function Home({ stats, types, courses }) {
             <Head title="Institute of Media Development and Research" />
 
             {/* Animations live here so no Tailwind config change is needed */}
-            <style>{`
+            <style dangerouslySetInnerHTML={{ __html: `
                 html, body { overflow-x: clip; }
                 .reveal { opacity: 0; transform: translateY(32px); transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); transition-delay: var(--d, 0ms); }
                 .reveal.in { opacity: 1; transform: none; }
@@ -289,7 +289,7 @@ export default function Home({ stats, types, courses }) {
                     .reveal, .hero-in, .tl-clip { opacity: 1 !important; transform: none !important; transition: none !important; animation: none !important; }
                     .float-slow, .float-slower, .kenburns img, .marquee-track, .playhead, .rec-pulse { animation: none !important; }
                 }
-            `}</style>
+            ` }} />
 
             {/* ============================ HERO ============================ */}
             <section className="relative overflow-hidden bg-white">

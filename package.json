@@ -3,7 +3,8 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build && vite build --ssr",
+        "start:ssr": "node bootstrap/ssr/ssr.js"
     },
     "dependencies": {
         "@inertiajs/react": "^2.0.0",

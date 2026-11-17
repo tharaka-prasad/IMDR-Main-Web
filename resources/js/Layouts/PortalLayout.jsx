@@ -268,7 +268,7 @@ export default function PublicLayout({ children }) {
                                 </a>
                             </li>
                             <li><a href="mailto:info@imdr.lk" className="flex items-start gap-3 hover:text-gold"><Mail size={16} className="mt-0.5 shrink-0 text-gold" /> info@imdr.lk</a></li>
-                            <li><a href="https://www.imdr.lk" className="flex items-start gap-3 hover:text-gold"><Globe size={16} className="mt-0.5 shrink-0 text-gold" /> www.imdr.lk</a></li>
+                            <li><a href="https://imdr.lk" className="flex items-start gap-3 hover:text-gold"><Globe size={16} className="mt-0.5 shrink-0 text-gold" /> www.imdr.lk</a></li>
                         </ul>
                     </div>
                 </div>

@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->append(\App\Http\Middleware\Indexing::class);
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
@@ -41,15 +42,22 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
             $status = $response->getStatusCode();
 
+            if ($status >= 400) {
+                $response->headers->set('X-Robots-Tag', 'noindex, follow');
+            }
+
             if ($request->is('payments/payhere/notify')) {
                 return $response;
             }
 
             if (in_array($status, [403, 404], true) || (! app()->environment(['local', 'testing']) && in_array($status, [500, 503], true))) {
+                $seo = \App\Support\SeoMetadata::excluded();
+                $request->attributes->set('seo', $seo);
                 return Inertia::render('Error', [
+                    'seo' => $seo,
                     'status' => $status,
                     'message' => $e instanceof HttpExceptionInterface ? $e->getMessage() : null,
-                ])->toResponse($request)->setStatusCode($status);
+                ])->toResponse($request)->setStatusCode($status)->withHeaders(['X-Robots-Tag' => 'noindex, follow']);
             }
 
             if ($status === 419) {
