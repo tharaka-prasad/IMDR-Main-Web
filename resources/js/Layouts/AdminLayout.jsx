@@ -65,7 +65,8 @@ const base = [
         items: [
             { href: '/portal/manage/announcements', label: 'Announcements', icon: Megaphone },
             { href: '/portal/manage/contact-messages', label: 'Website messages', icon: Inbox, badge: 'website_messages' },
-            { href: '/portal/manage/posts', label: 'News, events and media', icon: Newspaper },
+            { href: '/portal/news', label: 'News and ads', icon: Newspaper },
+            { href: '/portal/manage/posts', label: 'Events, research, media', icon: FileText },
         ],
     },
     { heading: 'Reports', items: [{ href: '/portal/reports', label: 'Finance reports', icon: BarChart3 }] },

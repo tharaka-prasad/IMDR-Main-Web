@@ -22,10 +22,17 @@ export default function Index({ type, posts }) {
                 ) : (
                     <ul className="mt-8 divide-y divide-navy-100 border-y border-navy-100">
                         {posts.map((p) => (
-                            <li key={p.id} className="py-5">
-                                <p className="text-xs font-semibold text-brand">{type === 'event' ? fmtDate(p.event_date) : fmtDate(p.published_at)}{p.location ? `, ${p.location}` : ''}</p>
-                                <Link href={`/posts/${p.slug}`} className="text-xl font-bold text-navy hover:text-brand">{p.title}</Link>
-                                {p.excerpt && <p className="mt-1 text-navy-600">{p.excerpt}</p>}
+                                                       <li key={p.id} className="flex gap-4 py-5">
+                                {p.image && (
+                                    <Link href={`/posts/${p.slug}`} className="shrink-0" tabIndex={-1} aria-hidden="true">
+                                        <img src={p.image} alt="" loading="lazy" className="h-24 w-36 rounded-lg object-cover sm:h-28 sm:w-44" />
+                                    </Link>
+                                )}
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold text-brand">{type === 'event' ? fmtDate(p.event_date) : fmtDate(p.published_at)}{p.location ? `, ${p.location}` : ''}{type === 'news' && p.ends_at ? ` - until ${fmtDate(p.ends_at)}` : ''}</p>
+                                    <Link href={`/posts/${p.slug}`} className="text-xl font-bold text-navy hover:text-brand">{p.title}</Link>
+                                    {p.excerpt && <p className="mt-1 text-navy-600">{p.excerpt}</p>}
+                                </div>
                             </li>
                         ))}
                     </ul>

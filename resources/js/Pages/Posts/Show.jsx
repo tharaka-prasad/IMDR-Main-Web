@@ -13,7 +13,7 @@ export default function Show({ post }) {
                     {post.type === 'event' && post.event_date ? `${fmtDateTime(post.event_date)}${post.location ? `, ${post.location}` : ''}` : fmtDate(post.published_at)}
                 </p>
                 <h1 className="display-wide mt-1 text-3xl text-navy sm:text-4xl">{post.title}</h1>
-                {post.image_url && <img src={post.image_url} alt="" className="mt-6 w-full rounded-xl" />}
+                {post.image && <img src={post.image} alt="" className="mt-6 w-full rounded-xl" />}
                 {post.excerpt && <p className="mt-6 text-lg text-navy-600">{post.excerpt}</p>}
                 {post.body && <div className="mt-4 whitespace-pre-line text-navy-700">{post.body}</div>}
             </article>
