@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { ArrowRight, Camera, Film, Mic, PenLine, Image as ImageIcon } from 'lucide-react';
 import { Button } from '../Components/ui';
 import { CourseImage } from '../Components/motion';
+import AdPopup from '../Components/AdPopup';
 
 /**
  * IMAGE SLOTS  ->  put your photos in:  public/images/home/
@@ -244,11 +245,12 @@ const soon = [
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
-export default function Home({ stats, types, courses }) {
+export default function Home({ stats, types, courses, ad }) {
     const shown = courses?.slice(0, FEATURED);
 
     return (
         <>
+        <AdPopup ad={ad} />
             <Head title="Institute of Media Development and Research" />
 
             {/* Animations live here so no Tailwind config change is needed */}

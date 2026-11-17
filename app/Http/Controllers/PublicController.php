@@ -27,9 +27,13 @@ class PublicController extends Controller
             ],
             'types' => CourseType::withCount(['courses as courses_count' => fn ($q) => $q->where('is_published', true)])->orderBy('level')->get(),
             'courses' => Course::with(['courseType:id,name', 'feeStructure'])->where('is_published', true)->latest()->limit(6)->get(),
-            'news' => Post::where('type', 'news')->where('is_published', true)->latest('published_at')->limit(3)->get(),
-            'events' => Post::where('type', 'event')->where('is_published', true)->orderBy('event_date')->limit(3)->get(),
-        ]);
+                        'news' => Post::live()->where('type', 'news')->latest('published_at')->limit(3)->get(),
+            'events' => Post::live()->where('type', 'event')->orderBy('event_date')->limit(3)->get(),
+            // Pop-up ad: the most recently started news that is switched on as an ad and is inside its start/end dates
+            'ad' => Post::live()->where('type', 'news')->where('show_as_ad', true)
+                ->orderByDesc('starts_at')->orderByDesc('id')
+                ->first(['id', 'title', 'slug', 'excerpt', 'image_path', 'image_url', 'starts_at', 'ends_at']),
+                ]);
     }
 
     public function about()
@@ -83,15 +87,14 @@ class PublicController extends Controller
 
     public function posts(Request $request, string $type)
     {
-        $q = Post::where('type', $type)->where('is_published', true);
-        $q->orderByDesc($type === 'event' ? 'event_date' : 'published_at');
+        $q = Post::live()->where('type', $type);        $q->orderByDesc($type === 'event' ? 'event_date' : 'published_at');
 
         return Inertia::render('Posts/Index', ['type' => $type, 'posts' => $q->limit(60)->get()]);
     }
 
     public function post(string $slug)
     {
-        return Inertia::render('Posts/Show', ['post' => Post::where('slug', $slug)->where('is_published', true)->firstOrFail()]);
+        return Inertia::render('Posts/Show', ['post' => Post::live()->where('slug', $slug)->firstOrFail()]);
     }
 
     public function contact()

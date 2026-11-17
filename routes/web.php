@@ -31,7 +31,9 @@ use App\Http\Controllers\StudentFinanceController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\WhatsAppController;
+use App\Http\Controllers\Admin\NewsController;
 use Illuminate\Support\Facades\Route;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -168,6 +170,13 @@ Route::middleware(['auth', 'active'])->prefix('portal')->group(function () {
         Route::put('/courses/{course}', [CourseController::class, 'update']);
         Route::delete('/courses/{course}', [CourseController::class, 'destroy']);
 
+        Route::get('/news', [NewsController::class, 'index']);
+        Route::get('/news/create', [NewsController::class, 'create']);
+        Route::post('/news', [NewsController::class, 'store']);
+        Route::get('/news/{post}/edit', [NewsController::class, 'edit'])->whereNumber('post');
+        Route::put('/news/{post}', [NewsController::class, 'update'])->whereNumber('post');
+        Route::delete('/news/{post}', [NewsController::class, 'destroy'])->whereNumber('post');
+          
         Route::get('/students', [StudentController::class, 'index']);
         Route::get('/students/create', [StudentController::class, 'create']);
         Route::post('/students', [StudentController::class, 'store']);
