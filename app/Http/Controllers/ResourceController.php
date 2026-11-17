@@ -11,6 +11,19 @@ use Inertia\Inertia;
 /** One controller behind all the simple list / add / edit / delete screens defined in ResourceRegistry. */
 class ResourceController extends Controller
 {
+    /**
+     * Keeps every panel to its own work: even if the registry lets a role read a list,
+     * these screens are only opened for the roles named here (the registry stays the single place for fields and rules).
+     */
+    private const READ_LIMIT = [
+        'course-types' => ['super_admin', 'admin'],
+        'classrooms' => ['super_admin', 'admin'],
+        'teaching-assignments' => ['super_admin', 'admin'],
+        'subjects' => ['super_admin', 'admin', 'lecturer'],
+        'batches' => ['super_admin', 'admin', 'lecturer'],
+        'announcements' => ['super_admin', 'admin', 'lecturer'],
+    ];
+
     private function definition(Request $request, string $resource, string $ability): array
     {
         $defs = ResourceRegistry::all();
@@ -18,6 +31,10 @@ class ResourceController extends Controller
 
         $def = $defs[$resource];
         $roles = $ability === 'read' ? $def['read'] : $def['write'];
+
+        if ($ability === 'read' && isset(self::READ_LIMIT[$resource])) {
+            $roles = array_values(array_intersect($roles, self::READ_LIMIT[$resource]));
+        }
         abort_unless(in_array($request->user()->role, $roles, true), 403, 'You do not have permission to open this page.');
 
         return $def;

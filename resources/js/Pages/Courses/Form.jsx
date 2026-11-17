@@ -41,7 +41,7 @@ export default function Form({ course, types }) {
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field label="Course name" error={e.name}><TextInput value={form.data.name} onChange={set('name')} required /></Field>
                         <Field label="Code" error={e.code}><TextInput value={form.data.code} onChange={set('code')} required /></Field>
-                        <Field label="Type" error={e.course_type_id}><SelectInput value={form.data.course_type_id} onChange={set('course_type_id')} options={types.map((t) => ({ value: t.id, label: t.name }))} required /></Field>
+                        <Field label="Category" error={e.course_type_id} help={<>Certificate, Advanced Certificate, Diploma and so on. <Link href="/portal/manage/course-types" className="text-brand hover:underline">Manage categories</Link></>}><SelectInput value={form.data.course_type_id} onChange={set('course_type_id')} options={types.map((t) => ({ value: t.id, label: t.name }))} required /></Field>
                         <Field label="Duration" error={e.duration}><TextInput value={form.data.duration} onChange={set('duration')} placeholder="12 months" /></Field>
                     </div>
                     <Field label="One-line summary (shown in course lists)" error={e.summary}><TextInput value={form.data.summary} onChange={set('summary')} /></Field>

@@ -13,12 +13,12 @@ export default function Manage({ courses, types, filters }) {
 
             <div className="mb-4 grid gap-3 sm:grid-cols-3">
                 <SearchBox className="sm:col-span-2" value={f.search} onChange={(v) => setF({ search: v })} placeholder="Search courses" />
-                <SelectInput value={f.type} onChange={(e) => setF({ type: e.target.value }, true)} options={types.map((t) => ({ value: t.id, label: t.name }))} placeholder="All types" />
+                <SelectInput value={f.type} onChange={(e) => setF({ type: e.target.value }, true)} options={types.map((t) => ({ value: t.id, label: t.name }))} placeholder="All categories" />
             </div>
 
             {courses.data.length === 0 ? <Empty title="No courses found" /> : (
                 <TableWrap>
-                    <Thead><th className="th">Code</th><th className="th">Course</th><th className="th">Type</th><th className="th text-right">Registration</th><th className="th text-right">Course fee</th><th className="th">Parts</th><th className="th">Batches</th><th className="th">Website</th><th className="th" /></Thead>
+                    <Thead><th className="th">Code</th><th className="th">Course</th><th className="th">Category</th><th className="th text-right">Registration</th><th className="th text-right">Course fee</th><th className="th">Parts</th><th className="th">Batches</th><th className="th">Website</th><th className="th" /></Thead>
                     <tbody className="divide-y divide-navy-50">
                         {courses.data.map((c) => (
                             <tr key={c.id} className="hover:bg-navy-50/50">

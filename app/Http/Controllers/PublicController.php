@@ -51,8 +51,13 @@ class PublicController extends Controller
 
         return Inertia::render('Courses/Index', [
             'courses' => $q->orderBy('name')->get(),
-            'types' => CourseType::orderBy('level')->get(['id', 'name']),
-            'filters' => ['type' => $request->query('type', ''), 'q' => $request->query('q', '')],
+                        // Categories (Certificate, Advanced Certificate, Diploma ...) that have at least one published course
+            'types' => CourseType::withCount(['courses' => fn ($c) => $c->where('is_published', true)])->orderBy('level')->get(),
+            'filters' => [
+                'type' => $request->query('type', ''),
+                'q' => $request->query('q', ''),
+                'department' => $request->query('department', ''),
+            ],
         ]);
     }
 

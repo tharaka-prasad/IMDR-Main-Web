@@ -27,30 +27,39 @@ const COURSE_IMG = "/images/courses/";
 const DEFAULT_IMG = "/images/home/course-default.jpg";
 const CTA_IMG = "/images/about/cta.jpg";
 
-/** Filter "reels". `name` must match the courses.category column. */
-const CATS = [
-  {
-    name: "Media & Journalism",
-    Icon: Newspaper,
-    blurb: "News, reporting, critique and media management.",
-    tile: "bg-brand text-white",
-    dot: "bg-brand",
-  },
-  {
-    name: "Cinema & Production",
-    Icon: Film,
-    blurb: "Camera, acting, photography, sound and film-making.",
-    tile: "bg-gold text-navy",
-    dot: "bg-gold",
-  },
-  {
-    name: "Tech, AI & Digital Business",
-    Icon: Cpu,
-    blurb: "AI tools, design, marketing and online business.",
-    tile: "bg-navy-500 text-white",
-    dot: "bg-navy-400",
-  },
+/**
+ * CHANGED: Filter "reels" = the departments. They come from the database (Admin > Departments), so a new
+ * department appears here by itself. Courses that still have no department keep their old `category` text.
+ */
+const PALETTE = [
+  { Icon: Newspaper, tile: "bg-brand text-white", dot: "bg-brand" },
+  { Icon: Film, tile: "bg-gold text-navy", dot: "bg-gold" },
+  { Icon: Cpu, tile: "bg-navy-500 text-white", dot: "bg-navy-400" },
+  { Icon: Layers, tile: "bg-emerald-700 text-white", dot: "bg-emerald-600" },
+  { Icon: LayoutGrid, tile: "bg-violet-700 text-white", dot: "bg-violet-600" },
 ];
+
+/** Set on every render of the page (see Index) so the course cards can look up their department colour. */
+let CATS = [];
+
+function buildCats(departments, courses) {
+  const names = (departments || []).map((d) => ({
+    name: d.name,
+    blurb: d.description,
+  }));
+
+  for (const c of courses) {
+    if (c.category && !names.some((n) => n.name === c.category)) {
+      names.push({ name: c.category, blurb: null });
+    }
+  }
+
+  return names.map((n, i) => ({
+    name: n.name,
+    blurb: n.blurb || `Courses in ${n.name}.`,
+    ...PALETTE[i % PALETTE.length],
+  }));
+}
 
 const ALL_TILE = {
   name: "all",
@@ -228,12 +237,26 @@ function FrameCard({ c, index }) {
   );
 }
 
-export default function Index({ courses, types, filters }) {
+// CHANGED: `departments` is now a prop (it comes from PublicController::courses)
+export default function Index({ courses, types, filters, departments }) {
+  // CHANGED: department tiles are built from the database
+  const cats = useMemo(
+    () => buildCats(departments, courses),
+    [departments, courses],
+  );
+  CATS = cats;
+
   const [f, setF] = useFilters("/courses", {
     q: filters.q,
     type: filters.type,
   });
-  const [cat, setCat] = useState("all");
+  // A header link such as /courses?department=3 opens the page with that department already chosen.
+  const [cat, setCat] = useState(
+    () =>
+      (departments || []).find(
+        (d) => String(d.id) === String(filters.department),
+      )?.name ?? "all",
+  );
   const [view, setView] = useState("playlist");
   const [activeId, setActiveId] = useState(null);
 
@@ -241,15 +264,16 @@ export default function Index({ courses, types, filters }) {
     (t) => t.courses_count === undefined || t.courses_count > 0,
   );
 
+  // CHANGED: cats instead of CATS
   const counts = useMemo(
     () =>
       Object.fromEntries(
-        CATS.map((k) => [
+        cats.map((k) => [
           k.name,
           courses.filter((c) => c.category === k.name).length,
         ]),
       ),
-    [courses],
+    [courses, cats],
   );
 
   const current = cat !== "all" && counts[cat] > 0 ? cat : "all";
@@ -267,7 +291,8 @@ export default function Index({ courses, types, filters }) {
   );
   const activeCourse = list[activeIndex];
 
-  const tiles = [ALL_TILE, ...CATS.filter((k) => counts[k.name] > 0)];
+  // CHANGED: cats instead of CATS
+  const tiles = [ALL_TILE, ...cats.filter((k) => counts[k.name] > 0)];
 
   return (
     <>
@@ -348,7 +373,7 @@ export default function Index({ courses, types, filters }) {
           <div
             className="-mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4"
             role="group"
-            aria-label="Filter by category"
+            aria-label="Filter by department"
           >
             {tiles.map((k, i) => {
               const on = current === k.name;
@@ -411,15 +436,36 @@ export default function Index({ courses, types, filters }) {
               placeholder="Search courses"
             />
 
+            {tiles.length > 1 && (
+              <label className="flex items-center gap-2 text-sm text-navy-600">
+                Department
+                <select
+                  value={current}
+                  onChange={(e) => {
+                    setCat(e.target.value);
+                    setActiveId(null);
+                  }}
+                  className="rounded-lg border border-navy-200 bg-white px-3 py-2 text-sm text-navy focus:border-brand focus:outline-none"
+                >
+                  <option value="all">All departments</option>
+                  {tiles.slice(1).map((k) => (
+                    <option key={k.name} value={k.name}>
+                      {k.name} ({counts[k.name]})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
             {levels.length > 0 && (
               <label className="flex items-center gap-2 text-sm text-navy-600">
-                Level
+                Category
                 <select
                   value={f.type || ""}
                   onChange={(e) => setF({ type: e.target.value }, true)}
                   className="rounded-lg border border-navy-200 bg-white px-3 py-2 text-sm text-navy focus:border-brand focus:outline-none"
                 >
-                  <option value="">All levels</option>
+                  <option value="">All categories</option>
                   {levels.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name}
